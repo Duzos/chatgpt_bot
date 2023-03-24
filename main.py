@@ -63,9 +63,12 @@ async def on_message(message):
         if thread.owner_id == bot.user.id:
             # Check to see if it begins with "AI"
             if thread.name[:2] == "AI":
-                async with thread.typing():
-                    response = await generate_response_with_history(message, thread)
-                await message.reply(response)
+                try:
+                    async with thread.typing():
+                        response = await generate_response_with_history(message, thread)
+                    await message.reply(response)
+                except Exception as error:
+                    await message.reply(f"`Request failed: {error}`")
 
     await bot.process_commands(message)
 
