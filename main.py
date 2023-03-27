@@ -12,7 +12,7 @@ OPENAI_KEY = config["openai_key"]
 
 # Setup OpenAI
 openai.api_key = OPENAI_KEY
-openai_engine = "text-davinci-003"
+openai_engine = "davinci-codex"
 
 # Setup discord client
 intents = discord.Intents.all()
@@ -22,13 +22,13 @@ bot = commands.Bot(command_prefix='!',intents=intents)
 async def generate_response(message, prompt: str = None):
     if prompt == None:
         prompt = f"{message.content}\nAI:"
-    response = openai.Completion.create(
+    response = await openai.Completion.acreate(
         engine=openai_engine,
         prompt=prompt,
-        max_tokens=256,
+        max_tokens=50,
         n=1,
         stop=None,
-        temperature=1,
+        temperature=1
     )
     return response.choices[0].text.strip()
 
@@ -56,19 +56,19 @@ async def on_message(message):
         return
     
     # Check to see if we are processing OpenAI on this message
-    if type(message.channel) == discord.Thread: 
-        # Check if it was made by dubot
+    if isinstance(message.channel, discord.Thread): 
         thread = message.channel
-        
-        if thread.owner_id == bot.user.id:
-            # Check to see if it begins with "AI"
-            if thread.name[:2] == "AI":
-                try:
-                    async with thread.typing():
-                        response = await generate_response_with_history(message, thread)
-                    await message.reply(response)
-                except Exception as error:
-                    await message.reply(f"`Request failed: {error}`")
+
+        # Check to see if its valid 
+        # # Owned by the bot 
+        # # Begins with the prefix we check for
+        if thread.owner_id == bot.user.id and thread.name[:2] == "AI":
+            try:
+                async with thread.typing():
+                    response = await generate_response_with_history(message, thread)
+                await message.reply(response)
+            except Exception as error:
+                await message.reply(f"`Request failed: {error}`")
 
     await bot.process_commands(message)
 
